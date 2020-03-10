@@ -6,7 +6,8 @@ red = (255, 0, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
 black = (0, 0, 0)
-white = (255,255,255)
+white = (255, 255, 255)
+
 
 class Rectangle:
     x = 10
@@ -14,7 +15,7 @@ class Rectangle:
     width = 10
     height = 10
     color = red
-    counter=0
+    counter = 0
 
     def __init__(self, height, counter):
         self.height = height
@@ -22,7 +23,14 @@ class Rectangle:
         self.counter = counter
 
     def draw(self, screen, counter):
-        py.draw.rect(screen, self.color, py.Rect((5 + self.width) * counter + x_offset, self.y + y_offset, self.width, self.height))
+        py.draw.rect(screen, self.color,
+                     py.Rect((5 + self.width) * counter + x_offset, self.y + y_offset, self.width, self.height))
+
+    # def draw_swap(self, other, screen, counter1, counter2):
+    #     py.draw.rect(screen, self.color,
+    #                  py.Rect((5 + self.width) * counter2 + x_offset, self.y + y_offset, self.width, self.height))
+    #     py.draw.rect(screen, self.color,
+    #                  py.Rect((5 + other.width) * counter1 + x_offset, other.y + y_offset, other.width, other.height))
 
     def getHeight(self):
         return self.height
@@ -40,6 +48,11 @@ class Rectangle:
         aux = self.x
         self.x = other.x
         other.x = aux
+
+    def swap_h(self, other):
+        aux = self.height
+        self.height = other.height
+        other.height = aux
 
     def select(self):
         self.color = green

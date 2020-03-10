@@ -20,21 +20,24 @@ for index, item in enumerate(L):
     rect_list.append(a)
 
 
-def refresh(items, delay=0):
+def refresh(items, delay=0, merge_sort=False):
     screen.fill(background)
-    draw_rectangles(items)
+    draw_rectangles(items, merge_sort)
     py.display.flip()
     py.time.wait(delay)
 
 
-def draw_rectangles(items):
+def draw_rectangles(items, merge_sort=False):
     for index, item in enumerate(items):
-        item.draw(screen, index)
+        if merge_sort:
+            item.draw(screen, item.counter)
+        else:
+            item.draw(screen, index)
 
 
-def mark_done(items):
+def mark_done(items, merge_sort=False):
     deselect_all(items)
-    refresh(items)
+    refresh(items, merge_sort)
 
     for index, item in enumerate(items):
         item.select()
@@ -68,10 +71,9 @@ def bubble_sort(nums, delay):
                 swapped = True
                 found = True
 
-                refresh(nums)
+                refresh(nums,delay)
             deselect_all(nums)
-            py.time.wait(delay)
-    mark_done(nums)
+            # py.time.wait(delay)
 
 
 def selection_sort(nums, delay, detailed=False):
@@ -101,8 +103,7 @@ def selection_sort(nums, delay, detailed=False):
         nums[i], nums[lowest_value_index] = nums[lowest_value_index], nums[i]
 
         deselect_all(nums)
-        refresh(nums, delay)
-    mark_done(nums)
+        refresh(nums)
 
 
 def insertion_sort(nums, delay):
@@ -110,39 +111,162 @@ def insertion_sort(nums, delay):
     for i in range(1, len(nums)):
         item_to_insert = nums[i]
 
-        # nums[i].select()
-        refresh(nums, delay)
         # And keep a reference of the index of the previous element
         j = i - 1
         # Move all items of the sorted segment forward if they are larger than
         # the item to insert
         while j >= 0 and nums[j].getHeight() > item_to_insert.getHeight():
-            # nums[j].select()
-            aux = nums[j+1].getHeight()
-
-            nums[j].lowest_value()
-            nums[j+1].select()
-
-            nums[j+1].change_h(item_to_insert.getHeight())
-            nums[j+2].to_be_inserted()
-            refresh(nums, delay * 10)
             deselect_all(nums)
-
-            nums[j+1].change_h(aux)
-            # nums[j].to_be_inserted()
-            nums[j + 1] = nums[j]
+            nums[j].select()
+            nums[j].swap_h(item_to_insert)
+            refresh(nums, delay)
+            item_to_insert.swap_h(nums[j])
             nums[i].select()
 
+            nums[j + 1] = nums[j]
             j -= 1
 
         # Insert the item
         nums[j + 1] = item_to_insert
-        # nums[j+1].select()
-        refresh(nums, delay)
+        refresh(nums)
         deselect_all(nums)
-        refresh(nums, delay)
-    mark_done(nums)
+        refresh(nums)
 
+
+def heapify(nums, heap_size, root_index):
+    # Assume the index of the largest element is the root index
+    largest = root_index
+    left_child = (2 * root_index) + 1
+    right_child = (2 * root_index) + 2
+
+    # If the left child of the root is a valid index, and the element is greater
+    # than the current largest element, then update the largest element
+    if left_child < heap_size and nums[left_child].getHeight() > nums[largest].getHeight():
+        largest = left_child
+
+    # Do the same for the right child of the root
+    if right_child < heap_size and nums[right_child].getHeight() > nums[largest].getHeight():
+        largest = right_child
+
+    # If the largest element is no longer the root element, swap them
+    if largest != root_index:
+        nums[root_index].select()
+        nums[largest].lowest_value()
+        refresh(nums, delay)
+        nums[root_index], nums[largest] = nums[largest], nums[root_index]
+        deselect_all(nums)
+        nums[root_index].select()
+        refresh(nums, delay)
+        # Heapify the new root element to ensure it's the largest
+        heapify(nums, heap_size, largest)
+
+
+def heap_sort(nums):
+    n = len(nums)
+
+    # Create a Max Heap from the list
+    # The 2nd argument of range means we stop at the element before -1 i.e.
+    # the first element of the list.
+    # The 3rd argument of range means we iterate backwards, reducing the count
+    # of i by 1
+    for i in range(n, -1, -1):
+        heapify(nums, n, i)
+
+    # Move the root of the max heap to the end of
+    for i in range(n - 1, 0, -1):
+        nums[i].lowest_value()
+        nums[0].select()
+        refresh(nums, delay)
+
+        nums[i], nums[0] = nums[0], nums[i]
+
+        deselect_all(nums)
+        nums[0].select()
+        nums[i].lowest_value()
+        refresh(nums, delay)
+        heapify(nums, i, 0)
+
+
+def mergeSort(arr):
+    if len(arr) > 1:
+        mid = len(arr) // 2  # Finding the mid of the array
+        L = arr[:mid]  # Dividing the array elements
+        R = arr[mid:]  # into 2 halves
+
+        mergeSort(L)  # Sorting the first half
+        mergeSort(R)  # Sorting the second half
+
+        i = j = k = 0
+
+        # Copy data to temp arrays L[] and R[]
+        while i < len(L) and j < len(R):
+            if L[i].getHeight() < R[j].getHeight():
+                L[i].select()
+                refresh(arr, delay, True)
+                deselect_all(arr)
+                arr[k] = L[i]
+                i += 1
+            else:
+                L[i].select()
+                refresh(arr, delay, True)
+                deselect_all(arr)
+                arr[k] = R[j]
+                j += 1
+            k += 1
+
+        # Checking if any element was left
+        while i < len(L):
+            arr[k] = L[i]
+            i += 1
+            k += 1
+
+        while j < len(R):
+            arr[k] = R[j]
+            j += 1
+            k += 1
+
+
+def partition(nums, low, high):
+    # We select the middle element to be the pivot. Some implementations select
+    # the first element or the last element. Sometimes the median value becomes
+    # the pivot, or a random one. There are many more strategies that can be
+    # chosen or created.
+    pivot = nums[(low + high) // 2]
+    i = low - 1
+    j = high + 1
+    while True:
+        i += 1
+        while nums[i].getHeight() < pivot.getHeight():
+            i += 1
+
+        j -= 1
+        while nums[j].getHeight() > pivot.getHeight():
+            j -= 1
+
+        if i >= j:
+            return j
+
+        # If an element at i (on the left of the pivot) is larger than the
+        # element at j (on right right of the pivot), then swap them
+        nums[i].lowest_value()
+        nums[j].select()
+        refresh(nums, delay)
+        nums[i], nums[j] = nums[j], nums[i]
+
+        deselect_all(nums)
+
+
+
+def quick_sort(nums):
+    # Create a helper function that will be called recursively
+    def _quick_sort(items, low, high):
+        if low < high:
+            # This is the index after the pivot, where our lists are split
+            split_index = partition(items, low, high)
+            _quick_sort(items, low, split_index)
+            _quick_sort(items, split_index + 1, high)
+
+    _quick_sort(nums, 0, len(nums) - 1)
 
 carryOn = True
 not_sorted = True
@@ -156,9 +280,15 @@ while carryOn:
             carryOn = False
     if not_sorted:
         # selection_sort(rect_list, delay, False)
-        # bubble_sort(rect_list, delay)
-        insertion_sort(rect_list, delay)
+        bubble_sort(rect_list, delay)
+        # insertion_sort(rect_list, delay)
+        # heap_sort(rect_list)
+        # mergeSort(rect_list)
+        # quick_sort(rect_list)
+        mark_done(rect_list)
+
         not_sorted = False
+
     draw_rectangles(rect_list)
     py.display.flip()
     clock.tick(60)
